@@ -6,8 +6,8 @@ import numpy as np
 import csv
 from simulation.逆運動学_3dof import generatOrbit_3dof
 from simulation.順運動学 import q2r_3dof
-from simulation.動力学 import dynamics, dynamics_2
 from simulation.可操作度 import calc_manipulability
+from simulation.逆動力学 import dynamics, dynamics_2
 from simulation.R2deg import R2deg
 from simulation.param import ld
 # from arduino_communication.arduino_communication import move_3dof
@@ -21,7 +21,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ddq_list = np.diff(q_list, axis=0, n=2)/(dt**2)
 
     # ========== 順運動学 =====================================================
-    T_list = np.array([q2r_3dof(q_list[p, 0:3]) for p in range(num)])
+    T_list = np.array([q2r_3dof(q_list[p]) for p in range(num)])
     r0R_list = np.dot(np.ones((num, 1)), np.array([[0, 0, -ld]]))
     r01_list = T_list[:, 0, 0:3, 3]
     r02_list = T_list[:, 1, 0:3, 3]
@@ -47,8 +47,8 @@ def simulation_3dof(r0_ref, dt, filenumber):
     # ========== 可操作度 =====================================================
     w_list = calc_manipulability(q_list, num)
 
-    # ========== 動力学 =======================================================
-    τ_list = dynamics(dt, filenumber, dof=32)
+    # ========== 逆動力学 =======================================================
+    τ_list = dynamics(dt, filenumber)
     fn0E = np.array([np.linalg.pinv(Jv_list[p].T).dot(τ_list[:, p]) for p in range(num-2)])
     fnEE = np.array([np.block([np.dot(np.linalg.inv(T_list[p, 3, 0:3, 0:3]), fn0E[p, 0:3]),
                                np.dot(np.linalg.inv(T_list[p, 3, 0:3, 0:3]), fn0E[p, 3:6])]) for p in range(num-2)])
@@ -72,11 +72,13 @@ def simulation_3dof(r0_ref, dt, filenumber):
     # return 0
 
 
-# ===============================  fig1  ====================================
+# ===============================  fig1,2,3  ==================================
     size = 0.85
     figsize = (16*size, 9*size)  # iPhone
     # size = 3.0
     # figsize = (4*size, 3*size)  # iPad
+
+# ===============================  fig1  =======================================
     fig1 = plt.figure(figsize=figsize)
     spec = gridspec.GridSpec(ncols=2, nrows=1, width_ratios=[1.2, 2])
     t_ax1 = np.arange(0, dt*num, dt)
@@ -130,11 +132,12 @@ def simulation_3dof(r0_ref, dt, filenumber):
     t_0 = np.arange(0, dt*num, dt)
     t_1 = np.arange(0, dt*(num-1), dt)
     t_2 = np.arange(0, dt*(num-2), dt)
-    fig_title_position = -0.25
+    fig_title_position_2 = -0.25
+    fig_title_position_3 = -0.12
     fig_xlim_max = np.max(t_0)
 
 
-# ===============================  fig2  ===================================
+# ===============================  fig2  =====================================
     fig2 = plt.figure(figsize=figsize)
     fig2.suptitle("simulation_"+str(filenumber))
     # ===========================  sub_fig3  ===================================
@@ -148,7 +151,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax3.set_xlim(0, fig_xlim_max)
     ax3.legend()
     ax3.grid()
-    ax3.set_title("図3 各関節の角度", y=fig_title_position)
+    ax3.set_title("図3 各関節の角度", y=fig_title_position_2)
     # ===========================  sub_fig4  ===================================
     ax4 = fig2.add_subplot(242)
     ax4.plot(t_1, dq_list[:, 0], label="$\dot{\\theta}_1$")
@@ -159,7 +162,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax4.set_xlim(0, fig_xlim_max)
     ax4.legend()
     ax4.grid()
-    ax4.set_title("図4 各関節の角速度", y=fig_title_position)
+    ax4.set_title("図4 各関節の角速度", y=fig_title_position_2)
     # ===========================  sub_fig5  ===================================
     ax5 = fig2.add_subplot(243)
     ax5.plot(t_2, ddq_list[:, 0], label="$\ddot{\\theta}_1$")
@@ -170,19 +173,20 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax5.set_xlim(0, fig_xlim_max)
     ax5.legend()
     ax5.grid()
-    ax5.set_title("図5 各関節の角加速度", y=fig_title_position)
+    ax5.set_title("図5 各関節の角加速度", y=fig_title_position_2)
     # ===========================  sub_fig6  ===================================
     ax6 = fig2.add_subplot(244)
     ax6.plot(t_0, w_list[0]*10**(-5), label="$w_1\\times 10^{-5}$")
     ax6.plot(t_0, w_list[1]*10**2, label="$w_2\\times 10^{2}$")
     ax6.plot(t_0, w_list[2]*10**0, label="$w_3$")
     ax6.plot(t_0, w_list[3]*10**0, label="$w_4$")
+    ax6.plot(t_0, w_list[4]*10**16, label="$w_d\\times 10^{16}$")
     ax6.set_xlabel("時間 [s]")
-    ax6.set_ylabel("可操作度")
+    ax6.set_ylabel("可操作度, 動的可操作度")
     ax6.set_xlim(0, fig_xlim_max)
     ax6.legend()
     ax6.grid()
-    ax6.set_title("図6 可操作度", y=fig_title_position)
+    ax6.set_title("図6 可操作度, 動的可操作度", y=fig_title_position_2)
     # ===========================  sub_fig7  ===================================
     ax7 = fig2.add_subplot(245)
     ax7.plot(t_0, r_list[4, :, 0], label="$^0p_{E,x}$")
@@ -193,7 +197,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax7.set_xlim(0, fig_xlim_max)
     ax7.legend()
     ax7.grid()
-    ax7.set_title("図7 手先座標系の位置", y=fig_title_position)
+    ax7.set_title("図7 手先座標系の位置", y=fig_title_position_2)
     # ===========================  sub_fig8  ===================================
     ax8 = fig2.add_subplot(246)
     ax8.plot(t_1, v_list[:, 0], label="$^0\dot{p}_{E,x}$")
@@ -204,7 +208,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax8.set_xlim(0, fig_xlim_max)
     ax8.legend()
     ax8.grid()
-    ax8.set_title("図8 手先座標系の移動速度", y=fig_title_position)
+    ax8.set_title("図8 手先座標系の移動速度", y=fig_title_position_2)
     # ===========================  sub_fig9  ===================================
     ax9 = fig2.add_subplot(247)
     ax9.plot(t_0, Euler_angles_list[:, 0], label="$\phi$")
@@ -215,7 +219,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax9.set_xlim(0, fig_xlim_max)
     ax9.legend()
     ax9.grid()
-    ax9.set_title("図9 手先座標系の姿勢", y=fig_title_position)
+    ax9.set_title("図9 手先座標系の姿勢", y=fig_title_position_2)
     # ===========================  sub_fig10  ===================================
     ax10 = fig2.add_subplot(248)
     ax10.plot(t_1, v_list[:, 3], label="$^0\omega_{E,x}$")
@@ -226,7 +230,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax10.set_xlim(0, fig_xlim_max)
     ax10.legend()
     ax10.grid()
-    ax10.set_title("図10 手先座標系の回転速度", y=fig_title_position)
+    ax10.set_title("図10 手先座標系の回転速度", y=fig_title_position_2)
 
     fig2.tight_layout()
     plt.get_current_fig_manager().window.wm_geometry("+50+50")
@@ -239,22 +243,22 @@ def simulation_3dof(r0_ref, dt, filenumber):
     torque_max23 = 2.059407
     fig3.suptitle("simulation_"+str(filenumber)+"_2")
     # ===========================  sub_fig11  ===================================
-    ax11 = fig3.add_subplot(231)
+    ax11 = fig3.add_subplot(131)
     ax11.plot(t_2, τ_list[0]/(10**9), label="$\\tau_1$")
     ax11.plot(t_2, τ_list[1]/(10**9), label="$\\tau_2$")
     ax11.plot(t_2, τ_list[2]/(10**9), label="$\\tau_3$")
-    ax11.hlines(torque_max1456, 0, fig_xlim_max, color="red", label="サーボモータ1456最大 $\pm"+str(torque_max1456)+" Nm$")
-    ax11.hlines(-torque_max1456, 0, fig_xlim_max, color="red")
-    ax11.hlines(torque_max23, 0, fig_xlim_max, color="tomato", label="サーボモータ23最大 $\pm"+str(torque_max23)+" Nm$")
-    ax11.hlines(-torque_max23, 0, fig_xlim_max, color="tomato")
+    ax11.hlines(torque_max1456, 0, fig_xlim_max, color="maroon", label="サーボモータ1456最大 $\pm"+str(torque_max1456)+" Nm$")
+    ax11.hlines(-torque_max1456, 0, fig_xlim_max, color="maroon")
+    ax11.hlines(torque_max23, 0, fig_xlim_max, color="red", label="サーボモータ23最大 $\pm"+str(torque_max23)+" Nm$")
+    ax11.hlines(-torque_max23, 0, fig_xlim_max, color="red")
     ax11.set_xlabel("時間 [s]")
     ax11.set_ylabel("関節トルク $[Nm]$")
     ax11.set_xlim(0, fig_xlim_max)
     ax11.legend()
     ax11.grid()
-    ax11.set_title("図11 各サーボモータのトルク", y=fig_title_position)
+    ax11.set_title("図11 各サーボモータのトルク", y=fig_title_position_3)
     # ===========================  sub_fig12  ===================================
-    ax12 = fig3.add_subplot(232)
+    ax12 = fig3.add_subplot(132)
     ax12.plot(t_2, fnEE[:, 0]/(10**6), label="$^Ef_{E,x}$")
     ax12.plot(t_2, fnEE[:, 1]/(10**6), label="$^Ef_{E,y}$")
     ax12.plot(t_2, fnEE[:, 2]/(10**6), label="$^Ef_{E,z}$")
@@ -272,9 +276,9 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax12.set_xlim(0, fig_xlim_max)
     ax12.legend()
     ax12.grid()
-    ax12.set_title("図12 手先, 各モータに発生する力", y=fig_title_position)
+    ax12.set_title("図12 手先, 各モータに発生する力", y=fig_title_position_3)
     # ===========================  sub_fig13  ===================================
-    ax13 = fig3.add_subplot(233)
+    ax13 = fig3.add_subplot(133)
     ax13.plot(t_2, fnEE[:, 3]/(10**9), label="$^En_{E,x}$")
     ax13.plot(t_2, fnEE[:, 4]/(10**9), label="$^En_{E,y}$")
     ax13.plot(t_2, fnEE[:, 5]/(10**9), label="$^En_{E,z}$")
@@ -292,7 +296,7 @@ def simulation_3dof(r0_ref, dt, filenumber):
     ax13.set_xlim(0, fig_xlim_max)
     ax13.legend()
     ax13.grid()
-    ax13.set_title("図13 手先, 各モータに発生するモーメント", y=fig_title_position)
+    ax13.set_title("図13 手先, 各モータに発生するモーメント", y=fig_title_position_3)
 
     fig3.tight_layout()
     plt.get_current_fig_manager().window.wm_geometry("+0+0")

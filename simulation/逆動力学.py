@@ -1,0 +1,32 @@
+import numpy as np
+import csv
+
+
+def dynamics(dt, filenumber):
+    with open("csv/simulation_"+str(filenumber)+".csv") as f:
+        reader = csv.reader(f)
+        l = [row for row in reader]
+        q = np.array([[float(v) for v in row] for row in l])
+    num = q.shape[0]
+    dq = np.diff(q, axis=0, n=1)/dt
+    ddq = np.diff(q, axis=0, n=2)/(dt**2)
+
+    q = np.deg2rad(q[0:-2, :])
+    dq = np.deg2rad(dq[0:-1, :])
+    ddq = np.deg2rad(ddq)
+
+    τ1 = 901387.5*(np.cos(2*q[:,0]-2*q[:,1])-np.cos(2*q[:,0]+2*q[:,1]))*ddq[:,1]-33750.0*(np.cos(-2*q[:,0]+2*q[:,1]+2*q[:,2])-np.cos(2*q[:,0]+2*q[:,1]+2*q[:,2]))*ddq[:,1]-33750.0*(np.cos(-2*q[:,0]+2*q[:,1]+2*q[:,2])-np.cos(2*q[:,0]+2*q[:,1]+2*q[:,2]))*ddq[:,2]+270000.0*np.sin(q[:,1]+q[:,2])**2*np.sin(q[:,0])**2*ddq[:,0]+270000.0*np.sin(q[:,1]+q[:,2])**2*np.sin(q[:,0])*np.cos(q[:,0])*dq[:,0]**2+270000.0*np.sin(q[:,1]+q[:,2])**2*np.sin(q[:,0])*np.cos(q[:,0])*dq[:,1]**2+540000.0*np.sin(q[:,1]+q[:,2])**2*np.sin(q[:,0])*np.cos(q[:,0])*dq[:,1]*dq[:,2]+270000.0*np.sin(q[:,1]+q[:,2])**2*np.sin(q[:,0])*np.cos(q[:,0])*dq[:,2]**2+2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])**2*np.sin(q[:,1])*dq[:,0]*dq[:,1]+540000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])**2*np.cos(q[:,1]+q[:,2])*dq[:,0]*dq[:,1]+540000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])**2*np.cos(q[:,1]+q[:,2])*dq[:,0]*dq[:,2]-2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])**2*np.cos(q[:,1])*ddq[:,0]-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.sin(q[:,1])*np.cos(q[:,0])*ddq[:,1]-2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])*dq[:,0]**2-2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])*dq[:,1]**2-2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])*dq[:,1]*dq[:,2]-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])*dq[:,2]**2-14422200.0*np.sin(q[:,0])**2*np.sin(q[:,1])*np.cos(q[:,1])*dq[:,0]*dq[:,1]-2322000.0*np.sin(q[:,0])**2*np.cos(q[:,1]+q[:,2])*np.cos(q[:,1])*dq[:,0]*dq[:,1]-2322000.0*np.sin(q[:,0])**2*np.cos(q[:,1]+q[:,2])*np.cos(q[:,1])*dq[:,0]*dq[:,2]+7211100.0*np.sin(q[:,0])**2*np.cos(q[:,1])**2*ddq[:,0]+1161000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*np.cos(q[:,1])*ddq[:,1]+1161000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*np.cos(q[:,1])*ddq[:,2]+7211100.0*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])**2*dq[:,0]**2+7211100.0*np.sin(q[:,0])*np.cos(q[:,0])*np.cos(q[:,1])**2*dq[:,1]**2+5000000.0*ddq[:,0]
+    τ2 = 901387.5*(np.cos(2*q[:,0]-2*q[:,1])-np.cos(2*q[:,0]+2*q[:,1]))*ddq[:,0]-33750.0*(np.cos(-2*q[:,0]+2*q[:,1]+2*q[:,2])-np.cos(2*q[:,0]+2*q[:,1]+2*q[:,2]))*ddq[:,0]-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,0])*np.sin(q[:,1])*np.cos(q[:,0])*ddq[:,0]-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,1])*np.cos(q[:,0])**2*dq[:,0]**2-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,1])*np.cos(q[:,0])**2*dq[:,1]**2-2322000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,1])*np.cos(q[:,0])**2*dq[:,1]*dq[:,2]-1161000.0*np.sin(q[:,1]+q[:,2])*np.sin(q[:,1])*np.cos(q[:,0])**2*dq[:,2]**2-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,0]**2-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,1]**2-540000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,1]*dq[:,2]-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,2]**2+88290000.0*np.sin(q[:,1]+q[:,2])-14422200.0*np.sin(q[:,0])*np.sin(q[:,1])**2*np.cos(q[:,0])*dq[:,0]*dq[:,1]-4644000.0*np.sin(q[:,0])*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*dq[:,0]*dq[:,1]-2322000.0*np.sin(q[:,0])*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*dq[:,0]*dq[:,2]-540000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])*dq[:,0]*dq[:,1]-540000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])*dq[:,0]*dq[:,2]+1161000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*np.cos(q[:,1])*ddq[:,0]+7211100.0*np.sin(q[:,1])**2*np.cos(q[:,0])**2*ddq[:,1]+2322000.0*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*ddq[:,1]+1161000.0*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*ddq[:,2]+7211100.0*np.sin(q[:,1])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,0]**2+7211100.0*np.sin(q[:,1])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,1]**2+270000.0*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])**2*ddq[:,1]+270000.0*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])**2*ddq[:,2]+1161000.0*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,0]**2+1161000.0*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,1]**2-632745000.0*np.cos(q[:,1])+30000000.0*ddq[:,1]
+    τ3 = -33750.0*(np.cos(-2*q[:,0]+2*q[:,1]+2*q[:,2])-np.cos(2*q[:,0]+2*q[:,1]+2*q[:,2]))*ddq[:,0]-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,0]**2-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,1]**2-540000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,1]*dq[:,2]-270000.0*np.sin(q[:,1]+q[:,2])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*dq[:,2]**2+88290000.0*np.sin(q[:,1]+q[:,2])-2322000.0*np.sin(q[:,0])*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*dq[:,0]*dq[:,1]-540000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])*dq[:,0]*dq[:,1]-540000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])*dq[:,0]*dq[:,2]+1161000.0*np.sin(q[:,0])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])*np.cos(q[:,1])*ddq[:,0]+1161000.0*np.sin(q[:,1])*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*ddq[:,1]+270000.0*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])**2*ddq[:,1]+270000.0*np.cos(q[:,1]+q[:,2])**2*np.cos(q[:,0])**2*ddq[:,2]+1161000.0*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,0]**2+1161000.0*np.cos(q[:,1]+q[:,2])*np.cos(q[:,0])**2*np.cos(q[:,1])*dq[:,1]**2+6000000.0*ddq[:,2]
+    return np.array([τ1, τ2, τ3])
+
+
+def dynamics_2(iTip1_list, num):
+    iRip1_list = iTip1_list[:, 0:3, 0:3]
+    iPip1_list = iTip1_list[:, 0:3, 3]
+    iPip1x__list = np.array([[[0,               -iPip1_list[p, 2], iPip1_list[p, 1]],
+                              [iPip1_list[p, 2], 0,               -iPip1_list[p, 0]],
+                              [-iPip1_list[p, 1], iPip1_list[p, 0], 0]] for p in range(num-2)])
+    Jip1i_T_list = np.array([np.block([[iRip1_list[p], np.zeros((3, 3))],
+                                       [np.dot(iPip1x__list[p], iRip1_list[p]), iRip1_list[p]]]) for p in range(num-2)])
+    return Jip1i_T_list

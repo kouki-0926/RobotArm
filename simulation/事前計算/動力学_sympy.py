@@ -20,10 +20,48 @@ def print2(*args):
     A = A.replace("cos(", "np.cos(")
     A = A.replace(" ", "")
     names = {id(v): k for k, v in currentframe().f_back.f_locals.items()}
-    print("        "+", ".join(names.get(id(arg), '???')+" = "+A for arg in args))
+    print("    "+", ".join(names.get(id(arg), '???')+" = "+A for arg in args))
 
 
-def dynamics_sympy(dof):
+def print3(*args):
+    A = str(trigsimp(args[0]))
+    A = A.replace("Derivative(θ1(t), (t, 2))", "ddθ1")
+    A = A.replace("Derivative(θ2(t), (t, 2))", "ddθ2")
+    A = A.replace("Derivative(θ3(t), (t, 2))", "ddθ3")
+
+    A = A.replace("Derivative(θ1(t), t)", "dθ1")
+    A = A.replace("Derivative(θ2(t), t)", "dθ2")
+    A = A.replace("Derivative(θ3(t), t)", "dθ3")
+
+    A = A.replace("θ1(t)", "θ1")
+    A = A.replace("θ2(t)", "θ2")
+    A = A.replace("θ3(t)", "θ3")
+
+    A = A.replace(" ", "")
+    A = A.replace("1.0*", "")
+
+    A = A.replace("sin(θ1)", "S1")
+    A = A.replace("sin(θ2)", "S2")
+    A = A.replace("sin(θ3)", "S3")
+
+    A = A.replace("cos(θ1)", "C1")
+    A = A.replace("cos(θ2)", "C2")
+    A = A.replace("cos(θ3)", "C3")
+
+    A = A.replace("sin(θ2+θ3)", "S23")
+    A = A.replace("cos(θ2+θ3)", "C23")
+    A = A.replace("cos(2*(θ1-θ2))-cos(2*(θ1+θ2))", "8*S1*S2*C1*C2")
+    A = A.replace("cos(2*(-θ1+θ2+θ3))-cos(2*(θ1+θ2+θ3))", "8*S1*S23*C1*C23")
+
+    A = factor(simplify(A))
+    A = str(A)
+
+    A = A.replace(" ", "")
+    names = {id(v): k for k, v in currentframe().f_back.f_locals.items()}
+    print(", ".join(names.get(id(arg), '???')+" = "+A for arg in args))
+
+
+def dynamics_sympy():
     t = symbols("t", positive=True)
     θ1 = Function("θ1", real=True)(t)
     θ2 = Function("θ2", real=True)(t)
@@ -32,53 +70,33 @@ def dynamics_sympy(dof):
                      θ2.diff(t),
                      θ3.diff(t)]
 
-    S1, C1 = [sin(θ1), cos(θ1)]
-    S2, C2 = [sin(θ2), cos(θ2)]
-    S3, C3 = [sin(θ3), cos(θ3)]
-    S12, C12 = [sin(θ1+θ2), cos(θ1+θ2)]
-    S23, C23 = [sin(θ2+θ3), cos(θ2+θ3)]
-
     # ============ 定数 ===========================
     g = 9.81*10**3
-    l1, l2, l3 = [50, 129, 110]
-    ml, mm = [100, 100]
+    la, lb, lc, ld = [129, 110, 150, 105]
+    ml, mm, mh = [100, 100, 100]
     I1, I2, I3 = [5e6, 3e7, 6e6]
     # =============================================
 
-    # =============== 3dof ========================
-    if(dof == 3):
-        m1, m2, m3 = [ml+mm, 2*ml+mm, ml]
-        lg1, lg2, lg3 = [(((ml/2)+mm)*l1)/(ml+mm),
-                         ((ml+mm)*l2)/(2*ml+mm),
-                         (1/2)*l3]
-    # =============== 3dof_2 ========================
-    if(dof == 32):
-        m1, m2, m3 = [ml+mm, 2*ml+mm, ml]
-        lg1, lg2, lg3 = [(((ml/2)+mm)*l1)/(ml+mm),
-                         ((ml+2*mm)*l2)/(2*(ml+mm)),
-                         (1/2)*l3]
-    # =============== 6dof ========================
-    elif(dof == 6):
-        m1, m2, m3 = [ml+mm, 2*ml+mm, ml+2*mm]
-        I3 = 2*I3
-        lg1, lg2, lg3 = [(((ml/2)+mm)*l1)/(ml+mm),
-                         ((ml+mm)*l2)/(2*ml+mm),
-                         ((ml+4*mm)*l3)/(2*(ml+2*mm))]
-    # =============================================
+    m1, m2, m3 = [ml+mm, 2*ml+mm, mh+2*mm]
+    l1, l2 = [10, 20]
+    lg1, lg2, lg3 = [l1,
+                     ((ml+mm)/(2*ml+mm))*la,
+                     ((1/3)*lc*mh+2*mm*l2)/(mh+2*mm)]
+
+    # m1, m2, m3, g = symbols("m1, m2, m3, g", positive=True)
+    # I1, I2, I3 = symbols("I1, I2, I3", positive=True)
+    # lg1, lg2, lg3 = symbols("lg1, lg2, lg3", positive=True)
+    # la, lb, lc, ld = symbols("la, lb, lc, ld", positive=True)
 
     xg1 = Matrix([0,
-                  0,
-                  lg1])
-    xg2 = Matrix([lg2*C1*C2,
-                  lg2*S1*C2,
-                  l1+lg2*S2])
-    xg3 = Matrix([l2*C1*C2+lg3*C1*C23,
-                  l2*S1*C2+lg3*S1*C23,
-                  l1+l2*S2+lg3*S23])
-
-    xg1, xg2, xg3 = [trigsimp(xg1),
-                     trigsimp(xg2),
-                     trigsimp(xg3)]
+                  -lg1,
+                  0])
+    xg2 = Matrix([[lg2*cos(θ1)*cos(θ2),
+                   lg2*sin(θ1)*cos(θ2),
+                   -lg2*sin(θ2)]])
+    xg3 = Matrix([[(la*cos(θ2)-lg3*sin(θ2+θ3))*cos(θ1),
+                   (la*cos(θ2)-lg3*sin(θ2+θ3))*sin(θ1),
+                   -la*sin(θ2)-lg3*cos(θ2+θ3)]])
 
     vg1, vg2, vg3 = [trigsimp(xg1.diff(t)),
                      trigsimp(xg2.diff(t)),
@@ -110,17 +128,12 @@ def dynamics_sympy(dof):
                 simplify(ddL_ddθ3_dt-dL_dθ3)])
     τ1, τ2, τ3 = τ
 
-    print2(τ1)
-    print2(τ2)
-    print2(τ3)
+    print3(τ1)
+    print3(τ2)
+    print3(τ3)
+    # print("    return np.array([τ1, τ2, τ3])")
     return τ
 
 
 if __name__ == '__main__':
-    print("    if(dof == 3):")
-    dynamics_sympy(3)
-    print("    if(dof == 32):")
-    dynamics_sympy(32)
-    print("    elif(dof == 6):")
-    dynamics_sympy(6)
-    print("    return [τ1, τ2, τ3]")
+    dynamics_sympy()

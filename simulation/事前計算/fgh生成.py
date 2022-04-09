@@ -1,6 +1,5 @@
 from sympy import *
 from tform_sympy import calc_T2
-from 事前計算_param import *
 
 
 def generate_fgh(parm_list, r):
